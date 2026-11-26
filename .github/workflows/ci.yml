@@ -12,7 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['7.4', '8.3']
+        # Dev tooling (Strauss 0.32 / Flysystem 3) needs PHP 8+. Library runtime remains PHP 7.4+.
+        php: ['8.3']
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +35,22 @@ jobs:
 
       - name: Unit tests
         run: composer test:unit
+
+  php74-syntax:
+    name: PHP 7.4 syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          coverage: none
+
+      - name: Lint shipped PHP for 7.4
+        run: |
+          find src assets examples -name '*.php' -print0 | xargs -0 -n1 php -l
 
   integration:
     name: Integration (WP + MySQL)
