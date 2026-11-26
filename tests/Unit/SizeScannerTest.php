@@ -59,9 +59,9 @@ final class SizeScannerTest extends TestCase {
 		$this->assertArrayHasKey( 'tree', $result );
 		$this->assertArrayHasKey( 'top_files', $result );
 		$this->assertIsArray( $result['unreadable'] );
-		// Finished state must not retain a dense nodes map of every file.
-		$this->assertSame( array(), $state['nodes'] );
-		$this->assertSame( array(), $state['stack'] );
+		// Finished state must not retain working sets.
+		$this->assertArrayNotHasKey( 'nodes', $state );
+		$this->assertArrayNotHasKey( 'stack', $state );
 	}
 
 	public function test_large_fixture_keeps_serialized_state_small() {

@@ -305,8 +305,6 @@ final class SizeScanner implements Job {
 			$state['tree'] = self::build_tree( $root, $nodes );
 			// Drop working sets from finished state so the option stays small.
 			unset( $state['nodes'], $state['stack'] );
-			$state['nodes'] = array();
-			$state['stack'] = array();
 		}
 
 		return $state;
