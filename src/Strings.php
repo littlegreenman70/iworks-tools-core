@@ -81,7 +81,7 @@ final class Strings {
 			'open'                => 'Open',
 			'more_tools'          => 'More free tools from iWorks.ie',
 			'need_custom'         => 'Need a custom plugin?',
-			'builds_them'         => 'iWorks builds them.',
+			'builds_them'         => 'iWorks builds them →',
 			'rate_plugin'         => 'Rate this plugin',
 			'status_good'         => 'Good',
 			'status_recommended'  => 'Recommended',
@@ -95,6 +95,7 @@ final class Strings {
 			'download_report'     => 'Download report',
 			'run_checks'          => 'Run checks',
 			'running'             => 'Running…',
+			'checking_progress'   => 'Checking {current} of {total}…',
 			'cancel'              => 'Cancel',
 			'resume'              => 'Resume',
 			'start'               => 'Start',
@@ -122,6 +123,16 @@ final class Strings {
 			'invalid_nonce'       => 'Invalid nonce.',
 			'not_allowed'         => 'Sorry, you are not allowed to access this page.',
 			'no_report'           => 'No report data.',
+			'assets_failed'       => 'iWorks Tools styles could not be loaded; please reinstall the plugin',
+			'empty_title'         => 'Run your first health check',
+			'empty_body'          => 'Takes about 10 seconds and changes nothing on your site.',
+			'run_first'           => 'Run checks',
+			'passed_checks'       => 'Passed checks ({count})',
+			'group_critical'      => 'Critical ({count})',
+			'group_recommended'   => 'Recommended ({count})',
+			'group_info'          => 'Info ({count})',
+			'filter_all'          => 'All',
+			'resume_prompt'       => 'A previous scan was interrupted. Resume where it left off?',
 		);
 	}
 }

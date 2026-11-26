@@ -15,3 +15,6 @@
 | 2026-11-26 | Report download is single-use, user-tied transient only. | Avoid forging report body via POST/GET. |
 | 2026-11-26 | Outside WordPress (no ABSPATH), SizeScanner accepts any real directory. | Lets unit fixtures run; WordPress always enforces allow-list. |
 | 2026-11-26 | Example-two bump script advances next minor of Core::VERSION. | Election proof stays valid after every release. |
+| 2026-11-26 | Asset URLs via `plugins_url( $relative, $plugin_file )` with `realpath()` relative paths; register at priority 5, enqueue at 10. | Symlinked plugins (local + some hosts) made `path_to_url()` return empty and silently drop CSS/JS and dependents. |
+| 2026-11-26 | Accordion result rows (`button` + `aria-expanded`) instead of always-open cards; good results behind a toggle. | Match Site Health UX and keep Critical findings prominent. |
+| 2026-11-26 | CSS custom properties on `.iwt-page` using `--wp-admin-theme-color`. | Respect the user's admin colour scheme without a build step. |

@@ -48,26 +48,32 @@ final class Page {
 		}
 
 		echo '<div class="wrap iwt-page">';
+		echo '<div class="iwt-page__header-band">';
 		echo '<header class="iwt-page__header">';
-		echo '<h1 class="iwt-page__title">' . esc_html( $title );
+		echo '<p class="iwt-page__eyebrow">' . esc_html( Strings::get( 'menu_title' ) ) . '</p>';
+		echo '<div class="iwt-page__title-row">';
+		echo '<h1 class="iwt-page__title">' . esc_html( $title ) . '</h1>';
 		if ( '' !== $version ) {
-			echo ' <span class="iwt-page__version">' . esc_html( Strings::get( 'version_label', array( 'version' => $version ) ) ) . '</span>';
+			echo ' <span class="iwt-pill">' . esc_html( Strings::get( 'plugin_version', array( 'version' => $version ) ) ) . '</span>';
 		}
-		echo '</h1>';
+		echo '</div>';
 		if ( '' !== $tagline ) {
 			echo '<p class="iwt-page__tagline">' . esc_html( $tagline ) . '</p>';
 		}
 		echo '</header>';
 
 		if ( ! empty( $tabs ) ) {
-			echo '<nav class="nav-tab-wrapper iwt-tabs" aria-label="' . esc_attr( $title ) . '">';
+			echo '<nav class="iwt-tabs" aria-label="' . esc_attr( $title ) . '">';
 			foreach ( $tabs as $key => $label ) {
-				$url   = add_query_arg( 'tab', $key );
-				$class = ( $key === $active ) ? 'nav-tab nav-tab-active' : 'nav-tab';
-				echo '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $url ) . '">' . esc_html( (string) $label ) . '</a>';
+				$url       = add_query_arg( 'tab', $key );
+				$is_active = ( $key === $active );
+				$class     = $is_active ? 'iwt-tabs__tab is-active' : 'iwt-tabs__tab';
+				$aria      = $is_active ? ' aria-current="page"' : '';
+				echo '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $url ) . '"' . $aria . '>' . esc_html( (string) $label ) . '</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $aria is fixed string.
 			}
 			echo '</nav>';
 		}
+		echo '</div>';
 
 		echo '<div class="iwt-notices" id="iwt-notices" aria-live="polite"></div>';
 		echo '<div class="iwt-page__content">';
