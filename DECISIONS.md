@@ -19,3 +19,6 @@
 | 2026-11-26 | Accordion result rows (`button` + `aria-expanded`) instead of always-open cards; good results behind a toggle. | Match Site Health UX and keep Critical findings prominent. |
 | 2026-11-26 | CSS custom properties on `.iwt-page` using `--wp-admin-theme-color`. | Respect the user's admin colour scheme without a build step. |
 | 2026-11-26 | CI quality job PHP 8.3 only; separate PHP 7.4 `php -l` on shipped sources. | Strauss 0.32 pulls Flysystem 3 which needs PHP 8+; runtime remains 7.4+. |
+| 2026-11-26 | Emit `<hr class="wp-header-end">` after the header band (before `#iwt-notices`). | WP `common.js` inserts notices after `.wp-header-end` or the first `h1`; without it, Elementor notices landed between the title and version pill. |
+| 2026-11-26 | Site Health badge label = plugin prefix, colour always blue. | Core Site Health already groups by status; other plugins badge their product name. |
+| 2026-11-26 | Score ring colour by numeric score (90+ / 60–89 / <60), not by presence of critical. | A score of 73 was showing red solely because one critical existed. |

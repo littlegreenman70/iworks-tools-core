@@ -97,12 +97,15 @@ final class SiteHealthBridge {
 		);
 		$status = isset( $map[ $result->status() ] ) ? $map[ $result->status() ] : 'recommended';
 
+		$badge_label = '' !== $this->label_prefix ? $this->label_prefix : 'iWorks Tools';
+
 		return array(
 			'label'       => $result->label(),
 			'status'      => $status,
 			'badge'       => array(
-				'label' => $result->status(),
-				'color' => ( 'critical' === $status ) ? 'red' : ( ( 'recommended' === $status ) ? 'orange' : 'blue' ),
+				// WordPress already groups items by status; the badge names the source.
+				'label' => $badge_label,
+				'color' => 'blue',
 			),
 			'description' => '<p>' . esc_html( $result->description() ) . '</p>',
 			'actions'     => '',

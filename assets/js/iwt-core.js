@@ -83,6 +83,7 @@
 		html += '<span class="iwt-result__chevron" aria-hidden="true"></span></span></button></h3>';
 		html += '<div class="iwt-result__body" id="' + panelId + '"' + hidden + '>';
 		html += '<p>' + escapeHtml(result.description || '') + '</p>';
+		html += matchesHtml(result.data || {});
 		if (result.why) {
 			html +=
 				'<div class="iwt-result__section"><h4>' +
@@ -100,6 +101,54 @@
 				'</p></div>';
 		}
 		html += '</div></article>';
+		return html;
+	}
+
+	function matchesHtml(data) {
+		var matches = data.matches || data.files || [];
+		if (!matches.length) {
+			return '';
+		}
+		var html = '<ul class="iwt-result__matches">';
+		var shown = 0;
+		matches.forEach(function (match) {
+			if (shown >= 10) {
+				return;
+			}
+			var path = '';
+			var size = '';
+			var kind = '';
+			if (typeof match === 'string') {
+				path = match;
+			} else if (match && typeof match === 'object') {
+				path = match.relative || match.path || '';
+				size = match.size || '';
+				kind = match.kind || '';
+			}
+			if (!path) {
+				return;
+			}
+			var label = path;
+			if (kind) {
+				label = kind + ': ' + path;
+			}
+			if (size) {
+				label += ' (' + size + ')';
+			}
+			html += '<li>' + escapeHtml(label) + '</li>';
+			shown += 1;
+		});
+		html += '</ul>';
+		var more = matches.length - shown;
+		if (more > 0) {
+			html +=
+				'<p class="iwt-result__matches-more">' +
+				escapeHtml((strings.andNMore || 'and {count} more').replace('{count}', String(more))) +
+				'</p>';
+		}
+		if (data.scan_label) {
+			html += '<p class="iwt-result__scan-source">' + escapeHtml(String(data.scan_label)) + '</p>';
+		}
 		return html;
 	}
 
@@ -174,10 +223,10 @@
 		});
 		var total = good + recommended + critical;
 		var score = total === 0 ? 100 : Math.round((good / total) * 100);
-		var scoreClass = 'iwt-summary__score--good';
-		if (critical > 0) {
-			scoreClass = 'iwt-summary__score--critical';
-		} else if (recommended > 0) {
+		var scoreClass = 'iwt-summary__score--critical';
+		if (score >= 90) {
+			scoreClass = 'iwt-summary__score--good';
+		} else if (score >= 60) {
 			scoreClass = 'iwt-summary__score--recommended';
 		}
 		var summary = document.querySelector('[data-iwt-summary]');
