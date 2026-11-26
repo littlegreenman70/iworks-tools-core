@@ -1,0 +1,13 @@
+/vendor/
+/vendor-prefixed/
+/node_modules/
+.phpunit.result.cache
+*.log
+.DS_Store
+/tests/wordpress/
+/tmp/
+composer.lock
+/examples/*/vendor/
+/examples/*/vendor-prefixed/
+/examples/*/composer.lock
+/tests/wordpress/

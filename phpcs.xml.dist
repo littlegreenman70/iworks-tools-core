@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<ruleset name="iWorks Tools Core">
+	<description>WordPress Coding Standards for iworks-tools-core (PSR-4 library).</description>
+
+	<file>src</file>
+	<file>examples</file>
+
+	<exclude-pattern>*/vendor/*</exclude-pattern>
+	<exclude-pattern>*/vendor-prefixed/*</exclude-pattern>
+	<exclude-pattern>*/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="ps"/>
+
+	<rule ref="WordPress">
+		<!-- Core has no own text domain; Strings::get() uses the plugin domain at runtime. -->
+		<exclude name="WordPress.WP.I18n"/>
+		<!-- PSR-4 / Composer classmap filenames. -->
+		<exclude name="WordPress.Files.FileName"/>
+		<!-- Property/@var blocks are documented by type; short prose is optional. -->
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+		<exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
+	</rule>
+
+
+	<!-- Allow multiple related demo classes in example DummyChecks files. -->
+	<rule ref="Generic.Files.OneObjectStructurePerFile.MultipleFound">
+		<exclude-pattern>*/examples/*/src/DummyChecks.php</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="IWorksIE"/>
+				<element value="iworks_tools"/>
+				<element value="iwieo"/>
+				<element value="iwiet"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="PHPCompatibilityWP"/>
+	<config name="testVersion" value="7.4-"/>
+	<config name="minimum_supported_wp_version" value="6.5"/>
+</ruleset>

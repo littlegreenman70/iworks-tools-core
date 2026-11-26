@@ -1,0 +1,12 @@
+# Path-based git attributes for export packaging.
+/.gitattributes  export-ignore
+/.gitignore      export-ignore
+/.github/        export-ignore
+/tests/          export-ignore
+/examples/       export-ignore
+/bin/            export-ignore
+/phpcs.xml.dist  export-ignore
+/phpstan.neon.dist export-ignore
+/phpunit.xml.dist export-ignore
+/PROGRESS.md     export-ignore
+/DECISIONS.md    export-ignore

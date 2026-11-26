@@ -1,0 +1,56 @@
+{
+	"name": "iworksie/example-one",
+	"description": "Example consumer of iworks-tools-core",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=7.4",
+		"iworksie/tools-core": "@dev"
+	},
+	"require-dev": {
+		"brianhenryie/strauss": "^0.32"
+	},
+	"repositories": [
+		{
+			"type": "path",
+			"url": "../../",
+			"options": {
+				"symlink": true
+			}
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"IWorksIE\\ExampleOne\\": "src/"
+		}
+	},
+	"extra": {
+		"strauss": {
+			"target_directory": "vendor-prefixed",
+			"namespace_prefix": "IWorksIE\\ExampleOne\\Vendor\\",
+			"classmap_prefix": "IWorksIE_ExampleOne_",
+			"constant_prefix": "IWIEO_",
+			"packages": [
+				"iworksie/tools-core"
+			],
+			"delete_vendor_packages": false
+		}
+	},
+	"scripts": {
+		"prefix-namespaces": [
+			"@php vendor/bin/strauss",
+			"@php ../../bin/copy-core-assets.php vendor-prefixed"
+		],
+		"post-install-cmd": [
+			"@prefix-namespaces"
+		],
+		"post-update-cmd": [
+			"@prefix-namespaces"
+		]
+	},
+	"config": {
+		"allow-plugins": {
+			"brianhenryie/strauss": true
+		}
+	}
+}

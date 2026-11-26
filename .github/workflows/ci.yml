@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: PHP ${{ matrix.php }} quality
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.3']
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: PHPCS
+        run: composer lint
+
+      - name: PHPStan
+        run: composer analyse
+
+      - name: Unit tests
+        run: composer test:unit
+
+  integration:
+    name: Integration (WP + MySQL)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: iworks_tests
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli
+          coverage: none
+          tools: composer:v2
+
+      - name: Install Subversion
+        run: sudo apt-get update && sudo apt-get install -y subversion
+
+      - name: Install library deps
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Build example plugins
+        run: |
+          composer install --no-interaction --prefer-dist --working-dir=examples/iworksie-example-one
+          composer install --no-interaction --prefer-dist --working-dir=examples/iworksie-example-two
+
+      - name: Install WP test suite
+        run: bash bin/install-wp-tests.sh iworks_tests root '' 127.0.0.1 latest
+
+      - name: Integration tests
+        env:
+          WP_TESTS_DIR: ${{ github.workspace }}/tests/wordpress/wordpress-tests-lib
+          IWT_TESTSUITE: integration
+        run: composer test:integration
+
+  plugin-check:
+    name: Plugin Check (example-one)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+
+      - name: Build example-one
+        run: composer install --no-interaction --prefer-dist --working-dir=examples/iworksie-example-one
+
+      - name: Plugin Check
+        uses: wordpress/plugin-check-action@v1
+        with:
+          build-dir: './examples/iworksie-example-one'
+          exclude-directories: 'vendor,vendor-prefixed/composer'

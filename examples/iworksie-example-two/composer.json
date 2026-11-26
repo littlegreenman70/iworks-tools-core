@@ -1,0 +1,57 @@
+{
+	"name": "iworksie/example-two",
+	"description": "Example consumer of iworks-tools-core pretending to ship 1.0.1",
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"php": ">=7.4",
+		"iworksie/tools-core": "@dev"
+	},
+	"require-dev": {
+		"brianhenryie/strauss": "^0.32"
+	},
+	"repositories": [
+		{
+			"type": "path",
+			"url": "../../",
+			"options": {
+				"symlink": true
+			}
+		}
+	],
+	"autoload": {
+		"psr-4": {
+			"IWorksIE\\ExampleTwo\\": "src/"
+		}
+	},
+	"extra": {
+		"strauss": {
+			"target_directory": "vendor-prefixed",
+			"namespace_prefix": "IWorksIE\\ExampleTwo\\Vendor\\",
+			"classmap_prefix": "IWorksIE_ExampleTwo_",
+			"constant_prefix": "IWIET_",
+			"packages": [
+				"iworksie/tools-core"
+			],
+			"delete_vendor_packages": false
+		}
+	},
+	"scripts": {
+		"prefix-namespaces": [
+			"@php vendor/bin/strauss",
+			"@php ../../bin/bump-example-two-version.php",
+			"@php ../../bin/copy-core-assets.php vendor-prefixed"
+		],
+		"post-install-cmd": [
+			"@prefix-namespaces"
+		],
+		"post-update-cmd": [
+			"@prefix-namespaces"
+		]
+	},
+	"config": {
+		"allow-plugins": {
+			"brianhenryie/strauss": true
+		}
+	}
+}
