@@ -8,7 +8,7 @@ Repo path: `/opt/homebrew/var/www/iworks-tools-core`
 |-----|--------|-------|
 | Asset symlink / plugins_url | done | Register prio 5; notice on failure; symlink integration test |
 | Design polish | done | Header band, pills, tabs, accordions, empty state, filters |
-| Version 1.1.0 + examples + tag | in progress | Lint/analyse/unit/integration green |
+| Version 1.1.0 + examples + tag | done | Tag v1.1.0; PR #1 merged; CI green |
 
 ## v1.0.1 review fixes (2026-11-26 Europe/Dublin)
 
