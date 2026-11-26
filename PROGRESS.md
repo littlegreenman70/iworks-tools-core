@@ -11,7 +11,7 @@ Repo path: `/opt/homebrew/var/www/iworks-tools-core`
 | Score ring by score bands | done | Unit test |
 | Result match list + table title cells | done | For HC backup listing / relative paths |
 | Bar chart outside + distinct colours | done | CSS |
-| Version 1.1.1 + examples + tag | in progress | |
+| Version 1.1.1 + examples + tag | done | Tag v1.1.1; PR #2 merged; CI green |
 
 ## v1.1.0 (2026-11-26 Europe/Dublin)
 
