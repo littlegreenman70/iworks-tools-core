@@ -78,10 +78,21 @@ final class Manager {
 	public function time_budget() {
 		$max = (int) ini_get( 'max_execution_time' );
 		if ( $max <= 0 ) {
-			return 10.0;
+			$budget = 10.0;
+		} else {
+			$forty  = $max * 0.4;
+			$budget = (float) min( 10.0, max( 1.0, $forty ) );
 		}
-		$forty = $max * 0.4;
-		return (float) min( 10.0, max( 1.0, $forty ) );
+		if ( function_exists( 'apply_filters' ) ) {
+			/**
+			 * Filter the per-step time budget (seconds) for chunked jobs.
+			 *
+			 * @param float $budget Seconds.
+			 * @param Core  $core   Core instance.
+			 */
+			$budget = (float) apply_filters( 'iworks_tools_job_time_budget', $budget, $this->core );
+		}
+		return $budget;
 	}
 
 	/**
@@ -108,7 +119,7 @@ final class Manager {
 	 * @param array<string,mixed> $state State.
 	 * @return void
 	 */
-	public function save_state( $id, array $state ) {
+	public function save_state( $id, array &$state ) {
 		$state['updated_at'] = time();
 		update_option( $this->option_key( $id ), $state, false );
 	}
