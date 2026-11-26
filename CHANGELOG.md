@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.1 — 2026-11-26
+
+- **Admin notices:** output `<hr class="wp-header-end">` after the header band so WordPress relocates third-party notices below the title row, not between the `h1` and version pill.
+- **Site Health badge:** use the plugin label prefix and a blue badge; status is already shown by the section.
+- **Score ring:** colour by score (90+ green, 60-89 orange, under 60 red), not by whether any critical exists.
+- **Result cards:** render optional match lists from result `data.matches` / `data.files`.
+- **Disk bar chart:** distinct segment colours plus an `outside` segment class for non-`wp-content` remainder.
+- **Tables:** cells may be `{ text, title }` so relative paths can keep the full path in `title`.
+
 ## 1.1.0 — 2026-11-26
 
 - **Assets:** build URLs with `plugins_url()` so symlinked plugins load CSS/JS; register handles at `admin_enqueue_scripts` priority 5; show an admin notice (and `error_log` when `WP_DEBUG`) if assets cannot be resolved instead of failing silently.

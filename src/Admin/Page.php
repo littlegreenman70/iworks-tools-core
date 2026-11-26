@@ -74,6 +74,9 @@ final class Page {
 			echo '</nav>';
 		}
 		echo '</div>';
+		// WordPress moves admin notices to just after .wp-header-end (or the first h1).
+		// Place it after the whole header band so third-party notices sit below, not inside.
+		echo '<hr class="wp-header-end" />';
 
 		echo '<div class="iwt-notices" id="iwt-notices" aria-live="polite"></div>';
 		echo '<div class="iwt-page__content">';

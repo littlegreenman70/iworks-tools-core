@@ -66,6 +66,7 @@ final class UI {
 		$html .= '</span></button></h3>';
 		$html .= '<div class="iwt-result__body" id="' . esc_attr( $panel_id ) . '"' . ( $open ? '' : ' hidden' ) . '>';
 		$html .= '<p>' . esc_html( $result->description() ) . '</p>';
+		$html .= self::result_matches_html( $result->data() );
 		if ( '' !== $result->why() ) {
 			$html .= '<div class="iwt-result__section"><h4>' . esc_html( Strings::get( 'why_it_matters' ) ) . '</h4>';
 			$html .= '<p>' . esc_html( $result->why() ) . '</p></div>';
@@ -86,6 +87,64 @@ final class UI {
 			$html .= '</ul>';
 		}
 		$html .= '</div></article>';
+		return $html;
+	}
+
+	/**
+	 * Optional match list from result data (relative path + size).
+	 *
+	 * @param array<string,mixed> $data Result data.
+	 * @return string HTML.
+	 */
+	private static function result_matches_html( array $data ) {
+		$matches = array();
+		if ( ! empty( $data['matches'] ) && is_array( $data['matches'] ) ) {
+			$matches = $data['matches'];
+		} elseif ( ! empty( $data['files'] ) && is_array( $data['files'] ) ) {
+			$matches = $data['files'];
+		}
+		if ( empty( $matches ) ) {
+			return '';
+		}
+
+		$html  = '<ul class="iwt-result__matches">';
+		$shown = 0;
+		foreach ( $matches as $match ) {
+			if ( $shown >= 10 ) {
+				break;
+			}
+			if ( is_string( $match ) ) {
+				$path = $match;
+				$size = '';
+				$kind = '';
+			} elseif ( is_array( $match ) ) {
+				$path = isset( $match['relative'] ) ? (string) $match['relative'] : ( isset( $match['path'] ) ? (string) $match['path'] : '' );
+				$size = isset( $match['size'] ) ? (string) $match['size'] : '';
+				$kind = isset( $match['kind'] ) ? (string) $match['kind'] : '';
+			} else {
+				continue;
+			}
+			if ( '' === $path ) {
+				continue;
+			}
+			$label = $path;
+			if ( '' !== $kind ) {
+				$label = $kind . ': ' . $path;
+			}
+			if ( '' !== $size ) {
+				$label .= ' (' . $size . ')';
+			}
+			$html .= '<li>' . esc_html( $label ) . '</li>';
+			++$shown;
+		}
+		$html .= '</ul>';
+		$more  = count( $matches ) - $shown;
+		if ( $more > 0 ) {
+			$html .= '<p class="iwt-result__matches-more">' . esc_html( Strings::get( 'and_n_more', array( 'count' => (string) $more ) ) ) . '</p>';
+		}
+		if ( ! empty( $data['scan_label'] ) ) {
+			$html .= '<p class="iwt-result__scan-source">' . esc_html( (string) $data['scan_label'] ) . '</p>';
+		}
 		return $html;
 	}
 
@@ -120,11 +179,13 @@ final class UI {
 		$info        = max( 0, (int) $info );
 		$total       = $good + $recommended + $critical;
 		$score       = ( 0 === $total ) ? 100 : (int) round( ( $good / $total ) * 100 );
-		$class       = 'iwt-summary__score--good';
-		if ( $critical > 0 ) {
-			$class = 'iwt-summary__score--critical';
-		} elseif ( $recommended > 0 ) {
+		// Score ring: 90+ green, 60-89 orange (Site Health "recommended"), under 60 red.
+		if ( $score >= 90 ) {
+			$class = 'iwt-summary__score--good';
+		} elseif ( $score >= 60 ) {
 			$class = 'iwt-summary__score--recommended';
+		} else {
+			$class = 'iwt-summary__score--critical';
 		}
 
 		$html  = '<div class="iwt-summary" role="status" aria-label="' . esc_attr( Strings::get( 'summary_label' ) ) . '" data-iwt-summary data-score="' . esc_attr( (string) $score ) . '">';
@@ -194,8 +255,10 @@ final class UI {
 	/**
 	 * Simple data table.
 	 *
-	 * @param array<string,string>            $columns Column key => heading.
-	 * @param array<int,array<string,string>> $rows Row maps.
+	 * Cell values may be a string or an array with `text` and optional `title`.
+	 *
+	 * @param array<string,string>           $columns Column key => heading.
+	 * @param array<int,array<string,mixed>> $rows Row maps.
 	 * @return string HTML.
 	 */
 	public static function table( array $columns, array $rows ) {
@@ -210,8 +273,14 @@ final class UI {
 			foreach ( $rows as $row ) {
 				$html .= '<tr>';
 				foreach ( array_keys( $columns ) as $key ) {
-					$cell  = isset( $row[ $key ] ) ? (string) $row[ $key ] : '';
-					$html .= '<td>' . esc_html( $cell ) . '</td>';
+					$raw = isset( $row[ $key ] ) ? $row[ $key ] : '';
+					if ( is_array( $raw ) ) {
+						$text  = array_key_exists( 'text', $raw ) ? (string) $raw['text'] : '';
+						$title = array_key_exists( 'title', $raw ) ? (string) $raw['title'] : '';
+						$html .= '<td' . ( '' !== $title ? ' title="' . esc_attr( $title ) . '"' : '' ) . '>' . esc_html( $text ) . '</td>';
+					} else {
+						$html .= '<td>' . esc_html( (string) $raw ) . '</td>';
+					}
 				}
 				$html .= '</tr>';
 			}

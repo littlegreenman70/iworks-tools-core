@@ -152,6 +152,8 @@ final class Assets {
 					'emptyBody'        => Strings::get( 'empty_body' ),
 					'runFirst'         => Strings::get( 'run_first' ),
 					'assetsFailed'     => Strings::get( 'assets_failed' ),
+					'andNMore'         => Strings::get( 'and_n_more' ),
+					'scanAgain'        => Strings::get( 'scan_again' ),
 				),
 			)
 		);

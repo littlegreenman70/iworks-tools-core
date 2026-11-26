@@ -2,6 +2,17 @@
 
 Repo path: `/opt/homebrew/var/www/iworks-tools-core`
 
+## v1.1.1 (2026-11-26 Europe/Dublin)
+
+| Fix | Status | Notes |
+|-----|--------|-------|
+| wp-header-end after header band | done | Notices land below band |
+| Site Health badge = plugin name / blue | done | Unit test |
+| Score ring by score bands | done | Unit test |
+| Result match list + table title cells | done | For HC backup listing / relative paths |
+| Bar chart outside + distinct colours | done | CSS |
+| Version 1.1.1 + examples + tag | in progress | |
+
 ## v1.1.0 (2026-11-26 Europe/Dublin)
 
 | Fix | Status | Notes |

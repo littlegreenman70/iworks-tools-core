@@ -456,8 +456,27 @@
 	color: var(--iwt-muted);
 }
 
+.iwt-result__matches {
+	margin: 8px 0 12px;
+	padding-left: 1.25em;
+	font-family: Menlo, Consolas, Monaco, monospace;
+	font-size: 12px;
+}
+
+.iwt-result__matches-more,
+.iwt-result__scan-source {
+	margin: 0 0 12px;
+	color: var(--iwt-muted);
+	font-size: 12px;
+}
+
 .iwt-progress {
 	margin: 1rem 0;
+}
+
+.iwt-progress[hidden],
+.iwt-progress.is-idle {
+	display: none;
 }
 
 .iwt-progress__row {
@@ -563,20 +582,25 @@
 	min-width: 0;
 }
 
+/* Distinct hues (AA against white for legend swatches; sizes also labelled). */
 .iwt-bar-chart__seg--uploads {
-	background: var(--iwt-accent);
+	background: #00a32a;
 }
 
 .iwt-bar-chart__seg--plugins {
-	background: #3858e9;
+	background: #2271b1;
 }
 
 .iwt-bar-chart__seg--themes {
-	background: #7c3aed;
+	background: #9b51e0;
 }
 
 .iwt-bar-chart__seg--other {
 	background: #646970;
+}
+
+.iwt-bar-chart__seg--outside {
+	background: #dba617;
 }
 
 .iwt-bar-chart__legend {
