@@ -8,7 +8,7 @@ Repo path: `/opt/homebrew/var/www/iworks-tools-core`
 |-----|--------|-------|
 | Ignore WP upgrade / upgrade-temp-backup | done | Filter `iworks_tools_backup_ignore_paths` |
 | Empty backup folders never match | done | `backup_prefix` requires bytes > 0 |
-| Version 1.1.2 + examples + tag | in progress | |
+| Version 1.1.2 + examples + tag | done | Tag v1.1.2; PR #4 merged |
 
 ## v1.1.1 (2026-11-26 Europe/Dublin)
 
