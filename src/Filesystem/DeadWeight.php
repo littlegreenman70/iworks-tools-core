@@ -132,6 +132,52 @@ final class DeadWeight {
 	}
 
 	/**
+	 * Relative paths (from ABSPATH) that must never count as backup dead weight.
+	 *
+	 * Filter: `iworks_tools_backup_ignore_paths`.
+	 *
+	 * @return array<int,string>
+	 */
+	public static function backup_ignore_paths() {
+		$paths = array(
+			'wp-content/upgrade',
+			'wp-content/upgrade-temp-backup',
+		);
+
+		if ( function_exists( 'apply_filters' ) ) {
+			$filtered = apply_filters( 'iworks_tools_backup_ignore_paths', $paths );
+			if ( is_array( $filtered ) ) {
+				$paths = $filtered;
+			}
+		}
+
+		return $paths;
+	}
+
+	/**
+	 * Whether a path is under a WordPress core / filtered backup-ignore location.
+	 *
+	 * @param string $path Absolute or relative path.
+	 * @return bool
+	 */
+	public static function is_ignored_backup_path( $path ) {
+		$path_lower = strtolower( str_replace( '\\', '/', (string) $path ) );
+		$path_lower = '/' . trim( $path_lower, '/' );
+
+		foreach ( self::backup_ignore_paths() as $rel ) {
+			$rel = strtolower( str_replace( '\\', '/', trim( (string) $rel, '/' ) ) );
+			if ( '' === $rel ) {
+				continue;
+			}
+			if ( (bool) preg_match( '#(^|/)' . preg_quote( $rel, '#' ) . '(/|$)#', $path_lower ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Match a path against dead-weight rules.
 	 *
 	 * @param string $path   Absolute or relative path.
@@ -165,10 +211,13 @@ final class DeadWeight {
 					$matched = $is_dir && 0 === strcasecmp( $basename, (string) $pattern );
 					break;
 				case 'dir_name_prefix':
-					// Basename must start with the pattern; never files; never plugin/theme code trees.
+					// Basename must start with the pattern; never files; never plugin/theme
+					// trees; never core upgrade folders; never empty (0-byte) folders.
 					$matched = $is_dir
 						&& 0 === stripos( $basename, (string) $pattern )
-						&& ! self::is_under_plugins_or_themes( $path_lower );
+						&& $bytes > 0
+						&& ! self::is_under_plugins_or_themes( $path_lower )
+						&& ! self::is_ignored_backup_path( $path );
 					break;
 				case 'path_suffix':
 					$suffix  = strtolower( str_replace( '\\', '/', (string) $pattern ) );

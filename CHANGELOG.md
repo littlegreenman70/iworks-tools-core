@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2 — 2026-11-26
+
+- **DeadWeight `backup_prefix`:** ignore WordPress core folders `wp-content/upgrade` and `wp-content/upgrade-temp-backup` (filter `iworks_tools_backup_ignore_paths`); skip empty (0-byte) backup-named folders.
+
 ## 1.1.1 — 2026-11-26
 
 - **Admin notices:** output `<hr class="wp-header-end">` after the header band so WordPress relocates third-party notices below the title row, not between the `h1` and version pill.
