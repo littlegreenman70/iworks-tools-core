@@ -7,6 +7,8 @@
 
 namespace IWorksIE\Core\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use IWorksIE\Core\Filesystem\DeadWeight;
 use PHPUnit\Framework\TestCase;
 
@@ -14,6 +16,16 @@ use PHPUnit\Framework\TestCase;
  * @covers \IWorksIE\Core\Filesystem\DeadWeight
  */
 final class DeadWeightTest extends TestCase {
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+	}
+
+	protected function tearDown(): void {
+		Monkey\tearDown();
+		parent::tearDown();
+	}
 
 	public function test_matches_backup_dir() {
 		$m = DeadWeight::match( '/var/www/wp-content/updraft', true, 100 );
@@ -64,5 +76,46 @@ final class DeadWeightTest extends TestCase {
 		$this->assertNull( $plugin );
 		$theme = DeadWeight::match( '/var/www/wp-content/themes/backup-theme', true, 100 );
 		$this->assertNull( $theme );
+	}
+
+	public function test_backup_prefix_ignores_core_upgrade_folders() {
+		$empty = DeadWeight::match( '/var/www/wp-content/upgrade-temp-backup', true, 0 );
+		$this->assertNull( $empty );
+
+		$with_files = DeadWeight::match( '/var/www/wp-content/upgrade-temp-backup', true, 4096 );
+		$this->assertNull( $with_files );
+
+		$nested = DeadWeight::match( '/var/www/wp-content/upgrade-temp-backup/plugins', true, 100 );
+		$this->assertNull( $nested );
+
+		$upgrade = DeadWeight::match( '/var/www/wp-content/upgrade', true, 100 );
+		$this->assertNull( $upgrade );
+	}
+
+	public function test_backup_prefix_ignores_empty_folder() {
+		$m = DeadWeight::match( '/var/www/wp-content/uploads/backup-old', true, 0 );
+		$this->assertNull( $m );
+	}
+
+	public function test_backup_ignore_paths_filter() {
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $tag, $value ) {
+				if ( 'iworks_tools_backup_ignore_paths' === $tag && is_array( $value ) ) {
+					$value[] = 'wp-content/custom-ignore';
+				}
+				return $value;
+			}
+		);
+
+		$this->assertTrue(
+			DeadWeight::is_ignored_backup_path( '/var/www/wp-content/custom-ignore/file.zip' )
+		);
+		$this->assertNull(
+			DeadWeight::match( '/var/www/wp-content/custom-ignore/backup-stuff', true, 100 )
+		);
+		$this->assertContains(
+			'wp-content/custom-ignore',
+			DeadWeight::backup_ignore_paths()
+		);
 	}
 }

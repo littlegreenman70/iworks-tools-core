@@ -22,3 +22,4 @@
 | 2026-11-26 | Emit `<hr class="wp-header-end">` after the header band (before `#iwt-notices`). | WP `common.js` inserts notices after `.wp-header-end` or the first `h1`; without it, Elementor notices landed between the title and version pill. |
 | 2026-11-26 | Site Health badge label = plugin prefix, colour always blue. | Core Site Health already groups by status; other plugins badge their product name. |
 | 2026-11-26 | Score ring colour by numeric score (90+ / 60–89 / <60), not by presence of critical. | A score of 73 was showing red solely because one critical existed. |
+| 2026-11-26 | `backup_prefix` ignores `wp-content/upgrade` and `wp-content/upgrade-temp-backup` via filterable `iworks_tools_backup_ignore_paths`; empty (0-byte) dirs never match. | WP 6.3+ creates `upgrade-temp-backup` on most sites; flagging it as Critical is a false positive. |
