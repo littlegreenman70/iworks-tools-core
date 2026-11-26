@@ -172,7 +172,7 @@ final class Registry {
 	 */
 	public function render_overview() {
 		if ( ! current_user_can( (string) $this->core->config( 'capability' ) ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'default' ) );
+			wp_die( esc_html( Strings::get( 'not_allowed' ) ) );
 		}
 
 		$plugins = apply_filters( 'iworks_tools_plugins', array() );

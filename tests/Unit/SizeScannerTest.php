@@ -57,8 +57,62 @@ final class SizeScannerTest extends TestCase {
 		$result = $scanner->finish( $state );
 		$this->assertGreaterThan( 11 * 1024 * 1024, $result['total_bytes'] );
 		$this->assertArrayHasKey( 'tree', $result );
-		// Unreadable dir should be recorded when permissions prevent scandir.
+		$this->assertArrayHasKey( 'top_files', $result );
 		$this->assertIsArray( $result['unreadable'] );
+		// Finished state must not retain a dense nodes map of every file.
+		$this->assertSame( array(), $state['nodes'] );
+		$this->assertSame( array(), $state['stack'] );
+	}
+
+	public function test_large_fixture_keeps_serialized_state_small() {
+		$root = sys_get_temp_dir() . '/iwt-scan-big-' . uniqid( '', true );
+		mkdir( $root, 0755, true );
+		$expected_bytes = 0;
+		$expected_files = 0;
+		for ( $d = 0; $d < 50; $d++ ) {
+			$dir = $root . '/d' . $d;
+			mkdir( $dir, 0755, true );
+			for ( $f = 0; $f < 100; $f++ ) {
+				$path = $dir . '/f' . $f . '.txt';
+				$blob = str_repeat( 'x', 32 );
+				file_put_contents( $path, $blob );
+				$expected_bytes += strlen( $blob );
+				++$expected_files;
+			}
+		}
+
+		$scanner = new SizeScanner();
+		$state   = $scanner->start( array( 'root' => $root ) );
+		$guard   = 0;
+		$max_ser = 0;
+		while ( empty( $state['done'] ) && $guard < 5000 ) {
+			$state   = $scanner->step( $state, 0.5 );
+			$ser     = serialize( $state );
+			$max_ser = max( $max_ser, strlen( $ser ) );
+			$this->assertLessThan( 200 * 1024, strlen( $ser ), 'Serialized state exceeded 200 KB at step ' . $guard );
+			++$guard;
+		}
+		$this->assertTrue( ! empty( $state['done'] ), 'Scan did not finish' );
+		$result = $scanner->finish( $state );
+		$this->assertSame( $expected_files, $result['total_files'] );
+		$this->assertSame( $expected_bytes, $result['total_bytes'] );
+		$this->assertLessThan( 200 * 1024, $max_ser );
+
+		$this->rrmdir( $root );
+	}
+
+	public function test_path_is_under_roots_rejects_etc_and_dotdot() {
+		$allowed = array( $this->dir );
+		$this->assertTrue( SizeScanner::path_is_under_roots( $this->dir . '/keep', $allowed ) );
+		$this->assertFalse( SizeScanner::path_is_under_roots( '/etc', $allowed ) );
+
+		$etc = realpath( '/etc' );
+		if ( false !== $etc ) {
+			$sneaky = realpath( $this->dir . '/keep/../../../../../etc' );
+			if ( false !== $sneaky ) {
+				$this->assertFalse( SizeScanner::path_is_under_roots( $sneaky, $allowed ) );
+			}
+		}
 	}
 
 	/**

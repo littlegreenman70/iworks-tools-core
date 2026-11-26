@@ -10,3 +10,8 @@
 | 2026-11-26 | Menu dashicon `dashicons-admin-tools`, position `75` (after Tools). | Matches WP admin conventions. |
 | 2026-11-26 | SizeScanner child threshold: 1 MB. | Matches prompt; keeps overview trees readable. |
 | 2026-11-26 | Strauss constraint `^0.32` (not `^2.3`). | Packagist latest is 0.32.0; no 2.x series exists. |
+| 2026-11-26 | SizeScanner stores directory aggregates + capped top/dead lists, never per-file nodes. | Option and AJAX payloads exploded on large sites; review finding. |
+| 2026-11-26 | Job AJAX returns public_view only. | Browser never needs stack/nodes. |
+| 2026-11-26 | Report download is single-use, user-tied transient only. | Avoid forging report body via POST/GET. |
+| 2026-11-26 | Outside WordPress (no ABSPATH), SizeScanner accepts any real directory. | Lets unit fixtures run; WordPress always enforces allow-list. |
+| 2026-11-26 | Example-two bump script advances next minor of Core::VERSION. | Election proof stays valid after every release. |

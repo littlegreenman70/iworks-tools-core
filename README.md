@@ -91,6 +91,7 @@ Public, versioned. **Add fields; never rename or remove.**
 | `iworks_tools_plugins` | filter | `array[]` of `{ slug, name, version, description, admin_url, wporg_url, icon }` |
 | `iworks_tools_catalogue` | filter | `array[]` of `{ label, url }` (default empty; no remote calls) |
 | `iworks_tools_dead_weight_rules` | filter | Rule list for `Filesystem\DeadWeight` |
+| `iworks_tools_scan_roots` | filter | Allowed SizeScanner roots (defaults: `ABSPATH`, `WP_CONTENT_DIR`) |
 | `iworks_tools_core_asset_url` | filter | Override asset base URL |
 
 **Version history**

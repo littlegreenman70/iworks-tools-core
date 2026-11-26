@@ -36,4 +36,39 @@ final class JobsManagerTest extends TestCase {
 		$this->assertGreaterThan( 0, $budget );
 		$this->assertLessThanOrEqual( 10.0, $budget );
 	}
+
+	public function test_public_view_omits_working_data() {
+		$mgr  = $this->bare_manager();
+		$view = $mgr->public_view(
+			'size_scanner',
+			array(
+				'progress'  => 40,
+				'message'   => 'Scanning…',
+				'done'      => false,
+				'cancelled' => false,
+				'updated_at'=> time(),
+				'nodes'     => array( '/tmp' => array() ),
+				'stack'     => array( '/tmp' ),
+				'result'    => array( 'secret' => 1 ),
+			)
+		);
+		$this->assertArrayHasKey( 'job_id', $view );
+		$this->assertArrayHasKey( 'progress', $view );
+		$this->assertArrayNotHasKey( 'nodes', $view );
+		$this->assertArrayNotHasKey( 'stack', $view );
+		$this->assertArrayNotHasKey( 'result', $view );
+
+		$done = $mgr->public_view(
+			'size_scanner',
+			array(
+				'progress'   => 100,
+				'message'    => 'Done',
+				'done'       => true,
+				'cancelled'  => false,
+				'updated_at' => time(),
+				'result'     => array( 'total_bytes' => 9 ),
+			)
+		);
+		$this->assertSame( array( 'total_bytes' => 9 ), $done['result'] );
+	}
 }

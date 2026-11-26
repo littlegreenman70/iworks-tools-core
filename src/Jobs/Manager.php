@@ -133,6 +133,30 @@ final class Manager {
 	}
 
 	/**
+	 * Public AJAX view of job state (no working internals).
+	 *
+	 * @param string              $id     Job id.
+	 * @param array<string,mixed> $state  Full state.
+	 * @param bool                $exists Whether state exists.
+	 * @return array<string,mixed>
+	 */
+	public function public_view( $id, array $state, $exists = true ) {
+		$view = array(
+			'job_id'    => (string) $id,
+			'progress'  => isset( $state['progress'] ) ? (int) $state['progress'] : 0,
+			'message'   => isset( $state['message'] ) ? (string) $state['message'] : '',
+			'done'      => ! empty( $state['done'] ),
+			'cancelled' => ! empty( $state['cancelled'] ),
+			'exists'    => (bool) $exists,
+			'stale'     => $exists ? $this->is_stale( $state ) : false,
+		);
+		if ( ! empty( $state['done'] ) && isset( $state['result'] ) ) {
+			$view['result'] = $state['result'];
+		}
+		return $view;
+	}
+
+	/**
 	 * Guard AJAX requests.
 	 *
 	 * @return void
@@ -161,12 +185,12 @@ final class Manager {
 
 		$existing = $this->load_state( $id );
 		if ( is_array( $existing ) && empty( $existing['done'] ) && empty( $existing['cancelled'] ) && ! $this->is_stale( $existing ) ) {
-			wp_send_json_success( $existing );
+			wp_send_json_success( $this->public_view( $id, $existing ) );
 		}
 
 		$params = array();
 		if ( isset( $_POST['params'] ) && is_array( $_POST['params'] ) ) {
-			$params = wp_unslash( $_POST['params'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- job-specific; each job should sanitise.
+			$params = wp_unslash( $_POST['params'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitised below.
 		} elseif ( isset( $_POST['params'] ) && is_string( $_POST['params'] ) ) {
 			$decoded = json_decode( wp_unslash( $_POST['params'] ), true ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( is_array( $decoded ) ) {
@@ -175,6 +199,10 @@ final class Manager {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
+		if ( function_exists( 'map_deep' ) ) {
+			$params = map_deep( $params, 'sanitize_text_field' );
+		}
+
 		$state              = $job->start( $params );
 		$state['done']      = ! empty( $state['done'] );
 		$state['progress']  = isset( $state['progress'] ) ? (int) $state['progress'] : 0;
@@ -182,7 +210,7 @@ final class Manager {
 		$state['cancelled'] = false;
 		$state['job_id']    = $id;
 		$this->save_state( $id, $state );
-		wp_send_json_success( $state );
+		wp_send_json_success( $this->public_view( $id, $state ) );
 	}
 
 	/**
@@ -202,11 +230,8 @@ final class Manager {
 		if ( ! is_array( $state ) ) {
 			wp_send_json_error( array( 'message' => 'no_state' ), 400 );
 		}
-		if ( ! empty( $state['cancelled'] ) ) {
-			wp_send_json_success( $state );
-		}
-		if ( ! empty( $state['done'] ) ) {
-			wp_send_json_success( $state );
+		if ( ! empty( $state['cancelled'] ) || ! empty( $state['done'] ) ) {
+			wp_send_json_success( $this->public_view( $id, $state ) );
 		}
 
 		$state             = $job->step( $state, $this->time_budget() );
@@ -220,10 +245,12 @@ final class Manager {
 			$state['result']   = $finished;
 			$state['message']  = Strings::get( 'job_done' );
 			$state['progress'] = 100;
+			// Keep finished option lean: drop working keys jobs may leave behind.
+			unset( $state['nodes'], $state['stack'] );
 		}
 
 		$this->save_state( $id, $state );
-		wp_send_json_success( $state );
+		wp_send_json_success( $this->public_view( $id, $state ) );
 	}
 
 	/**
@@ -234,16 +261,23 @@ final class Manager {
 	public function ajax_cancel() {
 		$this->guard();
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified in guard().
-		$id    = isset( $_POST['job_id'] ) ? sanitize_key( wp_unslash( (string) $_POST['job_id'] ) ) : '';
+		$id = isset( $_POST['job_id'] ) ? sanitize_key( wp_unslash( (string) $_POST['job_id'] ) ) : '';
+		if ( null === $this->get( $id ) ) {
+			wp_send_json_error( array( 'message' => 'unknown_job' ), 404 );
+		}
 		$state = $this->load_state( $id );
 		if ( ! is_array( $state ) ) {
-			$state = array( 'job_id' => $id );
+			$state = array(
+				'job_id'   => $id,
+				'progress' => 0,
+			);
 		}
 		$state['cancelled'] = true;
 		$state['done']      = true;
 		$state['message']   = Strings::get( 'job_cancelled' );
+		unset( $state['nodes'], $state['stack'] );
 		$this->save_state( $id, $state );
-		wp_send_json_success( $state );
+		wp_send_json_success( $this->public_view( $id, $state ) );
 	}
 
 	/**
@@ -259,13 +293,16 @@ final class Manager {
 		if ( ! is_array( $state ) ) {
 			wp_send_json_success(
 				array(
-					'job_id' => $id,
-					'exists' => false,
+					'job_id'    => $id,
+					'exists'    => false,
+					'progress'  => 0,
+					'message'   => '',
+					'done'      => false,
+					'cancelled' => false,
+					'stale'     => false,
 				)
 			);
 		}
-		$state['exists'] = true;
-		$state['stale']  = $this->is_stale( $state );
-		wp_send_json_success( $state );
+		wp_send_json_success( $this->public_view( $id, $state, true ) );
 	}
 }

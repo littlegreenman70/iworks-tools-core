@@ -97,33 +97,40 @@ final class Report {
 	}
 
 	/**
-	 * admin-post download handler.
+	 * admin-post download handler. Only serves single-use server-stored reports.
 	 *
 	 * @return void
 	 */
 	public function download() {
 		$prefix = (string) $this->core->config( 'prefix' );
 		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( (string) $_GET['_wpnonce'] ) ), $prefix . '_download_report' ) ) {
-			wp_die( esc_html__( 'Invalid nonce.', 'default' ), 403 );
+			wp_die( esc_html( Strings::get( 'invalid_nonce' ) ), 403 );
 		}
 		if ( ! current_user_can( (string) $this->core->config( 'capability' ) ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'default' ), 403 );
+			wp_die( esc_html( Strings::get( 'not_allowed' ) ), 403 );
 		}
 
-		$raw = isset( $_POST['report'] ) ? wp_unslash( (string) $_POST['report'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- downloaded as attachment text.
-		if ( '' === $raw && isset( $_GET['report'] ) ) {
-			$raw = wp_unslash( (string) $_GET['report'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		}
-		// Prefer transient keyed download for large reports.
 		$key = isset( $_GET['key'] ) ? sanitize_key( wp_unslash( (string) $_GET['key'] ) ) : '';
-		if ( '' !== $key ) {
-			$stored = get_transient( $prefix . '_report_' . $key );
-			if ( is_string( $stored ) ) {
-				$raw = $stored;
-			}
+		if ( '' === $key ) {
+			wp_die( esc_html( Strings::get( 'no_report' ) ), 400 );
 		}
-		if ( '' === $raw ) {
-			wp_die( esc_html__( 'No report data.', 'default' ), 400 );
+
+		$transient_key = $prefix . '_report_' . $key;
+		$stored        = get_transient( $transient_key );
+		delete_transient( $transient_key );
+
+		$raw     = '';
+		$user_id = 0;
+		if ( is_array( $stored ) && isset( $stored['content'] ) ) {
+			$raw     = (string) $stored['content'];
+			$user_id = isset( $stored['user_id'] ) ? (int) $stored['user_id'] : 0;
+		} elseif ( is_string( $stored ) ) {
+			// Legacy format: reject (no user binding).
+			$raw = '';
+		}
+
+		if ( '' === $raw || (int) get_current_user_id() !== $user_id ) {
+			wp_die( esc_html( Strings::get( 'no_report' ) ), 400 );
 		}
 
 		$filename = sanitize_file_name( (string) $this->core->config( 'slug' ) . '-report.md' );
@@ -135,7 +142,7 @@ final class Report {
 	}
 
 	/**
-	 * Store report content briefly and return a download URL.
+	 * Store report content briefly (tied to current user, single-use) and return a download URL.
 	 *
 	 * @param string $markdown Report body.
 	 * @return string
@@ -144,7 +151,14 @@ final class Report {
 		$prefix = (string) $this->core->config( 'prefix' );
 		$key    = function_exists( 'wp_generate_password' ) ? wp_generate_password( 12, false, false ) : bin2hex( random_bytes( 6 ) );
 		$ttl    = defined( 'MINUTE_IN_SECONDS' ) ? 10 * MINUTE_IN_SECONDS : 600;
-		set_transient( $prefix . '_report_' . $key, (string) $markdown, $ttl );
+		set_transient(
+			$prefix . '_report_' . $key,
+			array(
+				'content' => (string) $markdown,
+				'user_id' => (int) get_current_user_id(),
+			),
+			$ttl
+		);
 		return wp_nonce_url(
 			admin_url( 'admin-post.php?action=' . $prefix . '_download_report&key=' . rawurlencode( $key ) ),
 			$prefix . '_download_report'

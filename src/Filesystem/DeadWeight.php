@@ -165,7 +165,10 @@ final class DeadWeight {
 					$matched = $is_dir && 0 === strcasecmp( $basename, (string) $pattern );
 					break;
 				case 'dir_name_prefix':
-					$matched = $is_dir && 0 === stripos( $basename, (string) $pattern );
+					// Basename must start with the pattern; never files; never plugin/theme code trees.
+					$matched = $is_dir
+						&& 0 === stripos( $basename, (string) $pattern )
+						&& ! self::is_under_plugins_or_themes( $path_lower );
 					break;
 				case 'path_suffix':
 					$suffix  = strtolower( str_replace( '\\', '/', (string) $pattern ) );
@@ -202,5 +205,16 @@ final class DeadWeight {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Whether a path sits under wp-content/plugins or wp-content/themes.
+	 *
+	 * @param string $path_lower Lowercased normalised path.
+	 * @return bool
+	 */
+	private static function is_under_plugins_or_themes( $path_lower ) {
+		$path_lower = str_replace( '\\', '/', (string) $path_lower );
+		return (bool) preg_match( '#/wp-content/(plugins|themes)(/|$)#', $path_lower );
 	}
 }

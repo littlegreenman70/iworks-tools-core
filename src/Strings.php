@@ -116,6 +116,12 @@ final class Strings {
 			'summary_label'       => 'Health summary',
 			'installed_plugins'   => 'Installed iWorks Tools plugins',
 			'plugin_version'      => 'v{version}',
+			'scan_starting'       => 'Starting scan…',
+			'scanning'            => 'Scanning…',
+			'scan_complete'       => 'Scan complete',
+			'invalid_nonce'       => 'Invalid nonce.',
+			'not_allowed'         => 'Sorry, you are not allowed to access this page.',
+			'no_report'           => 'No report data.',
 		);
 	}
 }

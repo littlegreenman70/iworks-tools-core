@@ -299,21 +299,12 @@
 			return;
 		}
 		btn.addEventListener('click', function () {
-			var reportEl = document.getElementById('iwt-report-source');
 			var url = btn.getAttribute('data-url');
-			if (!reportEl || !url) {
+			if (!url) {
 				return;
 			}
-			var form = document.createElement('form');
-			form.method = 'POST';
-			form.action = url;
-			var input = document.createElement('textarea');
-			input.name = 'report';
-			input.value = reportEl.textContent || '';
-			form.appendChild(input);
-			document.body.appendChild(form);
-			form.submit();
-			form.remove();
+			// Report body is stored server-side (store_for_download); never POST it.
+			window.location.href = url;
 		});
 	}
 
