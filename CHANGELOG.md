@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 — 2026-11-26
+
+- **Assets:** build URLs with `plugins_url()` so symlinked plugins load CSS/JS; register handles at `admin_enqueue_scripts` priority 5; show an admin notice (and `error_log` when `WP_DEBUG`) if assets cannot be resolved instead of failing silently.
+- **Design:** Site Health inspired admin UI (header band, version pills, underline tabs, accordion results, score circle, filterable counts, empty state, progress %, overview cards).
+- Unit test for `Assets::relative_to_plugin()`; integration test loading an example plugin through a symlink.
+
 ## 1.0.1 — 2026-11-26
 
 - **SizeScanner:** store directory aggregates only (no per-file nodes); capped top-50 files, dead-weight files (500), and unreadable paths (100); drop working `nodes`/`stack` when finished.

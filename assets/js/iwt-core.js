@@ -35,6 +35,15 @@
 		});
 	}
 
+	function escapeHtml(str) {
+		return String(str)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#039;');
+	}
+
 	function badgeHtml(status) {
 		var label = strings[status] || status;
 		return (
@@ -48,44 +57,101 @@
 		);
 	}
 
-	function cardHtml(result) {
+	var resultUid = 0;
+
+	function cardHtml(result, open) {
+		resultUid += 1;
+		var status = result.status || 'info';
+		var panelId = 'iwt-result-js-' + resultUid;
+		var expanded = open ? 'true' : 'false';
+		var hidden = open ? '' : ' hidden';
 		var html =
 			'<article class="iwt-result iwt-result--' +
-			result.status +
+			status +
 			'" data-status="' +
-			result.status +
+			status +
 			'">';
-		html += '<header class="iwt-result__header">';
-		html += '<h3 class="iwt-result__title">' + escapeHtml(result.label || '') + '</h3>';
-		html += badgeHtml(result.status || 'info');
-		html += '</header><div class="iwt-result__body"><p>' + escapeHtml(result.description || '') + '</p>';
+		html += '<h3 class="iwt-result__heading">';
+		html +=
+			'<button type="button" class="iwt-result__toggle" aria-expanded="' +
+			expanded +
+			'" aria-controls="' +
+			panelId +
+			'">';
+		html += '<span class="iwt-result__title">' + escapeHtml(result.label || '') + '</span>';
+		html += '<span class="iwt-result__meta">' + badgeHtml(status);
+		html += '<span class="iwt-result__chevron" aria-hidden="true"></span></span></button></h3>';
+		html += '<div class="iwt-result__body" id="' + panelId + '"' + hidden + '>';
+		html += '<p>' + escapeHtml(result.description || '') + '</p>';
 		if (result.why) {
 			html +=
-				'<details class="iwt-result__details"><summary>' +
+				'<div class="iwt-result__section"><h4>' +
 				escapeHtml(strings.why || 'Why it matters') +
-				'</summary><p>' +
+				'</h4><p>' +
 				escapeHtml(result.why) +
-				'</p></details>';
+				'</p></div>';
 		}
 		if (result.fix) {
 			html +=
-				'<details class="iwt-result__details"><summary>' +
+				'<div class="iwt-result__section"><h4>' +
 				escapeHtml(strings.fix || 'How to fix') +
-				'</summary><p>' +
+				'</h4><p>' +
 				escapeHtml(result.fix) +
-				'</p></details>';
+				'</p></div>';
 		}
 		html += '</div></article>';
 		return html;
 	}
 
-	function escapeHtml(str) {
-		return String(str)
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#039;');
+	function groupLabel(status, count) {
+		var map = {
+			critical: strings.groupCritical || 'Critical ({count})',
+			recommended: strings.groupRecommended || 'Recommended ({count})',
+			info: strings.groupInfo || 'Info ({count})',
+			good: strings.passedChecks || 'Passed checks ({count})'
+		};
+		var template = map[status] || status + ' ({count})';
+		return template.replace('{count}', String(count));
+	}
+
+	function renderGrouped(results) {
+		var buckets = { critical: [], recommended: [], info: [], good: [] };
+		results.forEach(function (result) {
+			var status = result.status || 'info';
+			if (!buckets[status]) {
+				buckets[status] = [];
+			}
+			buckets[status].push(result);
+		});
+		var html = '';
+		['critical', 'recommended', 'info', 'good'].forEach(function (status) {
+			var items = buckets[status];
+			if (!items.length) {
+				return;
+			}
+			var collapsed = status === 'good';
+			html +=
+				'<section class="iwt-group iwt-group--' +
+				status +
+				(collapsed ? ' is-collapsed' : '') +
+				'" data-group="' +
+				status +
+				'">';
+			if (collapsed) {
+				html +=
+					'<button type="button" class="iwt-group__toggle" aria-expanded="false" data-iwt-group-toggle>' +
+					escapeHtml(groupLabel(status, items.length)) +
+					'</button>';
+			} else {
+				html += '<h2 class="iwt-group__heading">' + escapeHtml(groupLabel(status, items.length)) + '</h2>';
+			}
+			html += '<div class="iwt-group__results">';
+			items.forEach(function (result) {
+				html += cardHtml(result, status === 'critical');
+			});
+			html += '</div></section>';
+		});
+		return html;
 	}
 
 	function updateSummary(container) {
@@ -93,6 +159,7 @@
 		var good = 0;
 		var recommended = 0;
 		var critical = 0;
+		var info = 0;
 		cards.forEach(function (card) {
 			var status = card.getAttribute('data-status');
 			if (status === 'good') {
@@ -101,6 +168,8 @@
 				recommended += 1;
 			} else if (status === 'critical') {
 				critical += 1;
+			} else if (status === 'info') {
+				info += 1;
 			}
 		});
 		var total = good + recommended + critical;
@@ -115,44 +184,142 @@
 		if (!summary) {
 			return;
 		}
+		summary.setAttribute('data-score', String(score));
 		summary.innerHTML =
 			'<div class="iwt-summary__score ' +
 			scoreClass +
-			'" aria-hidden="true"><span>' +
+			'" style="--iwt-score:' +
+			score +
+			'" aria-hidden="true"><span class="iwt-summary__score-value">' +
 			score +
 			'</span></div><ul class="iwt-summary__counts">' +
-			'<li><span class="iwt-summary__count">' +
-			good +
-			'</span> ' +
-			escapeHtml(strings.good || 'Good') +
-			'</li>' +
-			'<li><span class="iwt-summary__count">' +
-			recommended +
-			'</span> ' +
-			escapeHtml(strings.recommended || 'Recommended') +
-			'</li>' +
-			'<li><span class="iwt-summary__count">' +
+			'<li><button type="button" class="iwt-summary__filter is-active" data-iwt-filter="all">' +
+			escapeHtml(strings.filterAll || 'All') +
+			'</button></li>' +
+			'<li><button type="button" class="iwt-summary__filter" data-iwt-filter="critical"><span class="iwt-summary__count">' +
 			critical +
 			'</span> ' +
 			escapeHtml(strings.critical || 'Critical') +
-			'</li></ul>';
+			'</button></li>' +
+			'<li><button type="button" class="iwt-summary__filter" data-iwt-filter="recommended"><span class="iwt-summary__count">' +
+			recommended +
+			'</span> ' +
+			escapeHtml(strings.recommended || 'Recommended') +
+			'</button></li>' +
+			'<li><button type="button" class="iwt-summary__filter" data-iwt-filter="good"><span class="iwt-summary__count">' +
+			good +
+			'</span> ' +
+			escapeHtml(strings.good || 'Good') +
+			'</button></li>' +
+			(info
+				? '<li><button type="button" class="iwt-summary__filter" data-iwt-filter="info"><span class="iwt-summary__count">' +
+				  info +
+				  '</span> ' +
+				  escapeHtml(strings.info || 'Info') +
+				  '</button></li>'
+				: '') +
+			'</ul>';
+		bindFilters(summary);
+	}
+
+	function bindFilters(root) {
+		var summary = root || document.querySelector('[data-iwt-summary]');
+		if (!summary) {
+			return;
+		}
+		summary.querySelectorAll('[data-iwt-filter]').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				var filter = btn.getAttribute('data-iwt-filter') || 'all';
+				summary.querySelectorAll('[data-iwt-filter]').forEach(function (el) {
+					el.classList.toggle('is-active', el === btn);
+				});
+				document.querySelectorAll('[data-iwt-results] .iwt-result').forEach(function (card) {
+					var status = card.getAttribute('data-status');
+					var show = filter === 'all' || status === filter;
+					card.classList.toggle('is-filtered-out', !show);
+				});
+				document.querySelectorAll('[data-iwt-results] .iwt-group').forEach(function (group) {
+					var visible = group.querySelectorAll('.iwt-result:not(.is-filtered-out)');
+					group.classList.toggle('is-filtered-out', visible.length === 0);
+				});
+			});
+		});
+	}
+
+	function bindAccordions(root) {
+		(root || document).querySelectorAll('.iwt-result__toggle').forEach(function (btn) {
+			if (btn.getAttribute('data-iwt-bound')) {
+				return;
+			}
+			btn.setAttribute('data-iwt-bound', '1');
+			btn.addEventListener('click', function () {
+				var expanded = btn.getAttribute('aria-expanded') === 'true';
+				var panelId = btn.getAttribute('aria-controls');
+				var panel = panelId ? document.getElementById(panelId) : null;
+				btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+				if (panel) {
+					if (expanded) {
+						panel.setAttribute('hidden', '');
+					} else {
+						panel.removeAttribute('hidden');
+					}
+				}
+			});
+		});
+		(root || document).querySelectorAll('[data-iwt-group-toggle]').forEach(function (btn) {
+			if (btn.getAttribute('data-iwt-bound')) {
+				return;
+			}
+			btn.setAttribute('data-iwt-bound', '1');
+			btn.addEventListener('click', function () {
+				var group = btn.closest('.iwt-group');
+				if (!group) {
+					return;
+				}
+				var expanded = btn.getAttribute('aria-expanded') === 'true';
+				btn.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+				group.classList.toggle('is-collapsed', expanded);
+			});
+		});
+	}
+
+	function progressLabel(current, total) {
+		var template = strings.checkingProgress || 'Checking {current} of {total}…';
+		return template.replace('{current}', String(current)).replace('{total}', String(total));
 	}
 
 	function runChecks() {
 		var list = document.querySelector('[data-iwt-results]');
-		var button = document.querySelector('[data-iwt-run-checks]');
+		var button = document.querySelector('[data-iwt-run-checks], [data-iwiehc-run-checks]');
+		var empty = document.querySelector('[data-iwt-empty]');
+		var summaryWrap = document.querySelector('[data-iwt-summary-wrap]');
 		if (!list || !cfg.checks || !cfg.checks.length) {
 			return;
 		}
+		if (empty) {
+			empty.hidden = true;
+		}
+		if (summaryWrap) {
+			summaryWrap.hidden = false;
+		}
 		if (button) {
 			button.disabled = true;
-			button.textContent = strings.running || 'Running…';
+			button.innerHTML =
+				'<span class="spinner is-active" aria-hidden="true"></span> ' +
+				escapeHtml(strings.running || 'Running…');
 		}
 		list.innerHTML = '';
-		var reportLines = [];
+		list.setAttribute('aria-busy', 'true');
+		var collected = [];
+		var total = cfg.checks.length;
 		var chain = Promise.resolve();
-		cfg.checks.forEach(function (check) {
+		cfg.checks.forEach(function (check, index) {
 			chain = chain.then(function () {
+				if (button) {
+					button.innerHTML =
+						'<span class="spinner is-active" aria-hidden="true"></span> ' +
+						escapeHtml(progressLabel(index + 1, total));
+				}
 				return post(cfg.prefix + '_run_check', {
 					nonce: cfg.checksNonce,
 					check_id: check.id
@@ -162,22 +329,26 @@
 						label: check.label,
 						description: 'Request failed'
 					};
-					list.insertAdjacentHTML('beforeend', cardHtml(result));
+					collected.push(result);
+					list.innerHTML = renderGrouped(collected);
+					bindAccordions(list);
 					updateSummary(list);
-					reportLines.push('## ' + (result.label || check.label));
-					reportLines.push(result.description || '');
-					reportLines.push('');
 				});
 			});
 		});
 		chain.finally(function () {
+			list.removeAttribute('aria-busy');
 			if (button) {
 				button.disabled = false;
 				button.textContent = button.getAttribute('data-label') || 'Run checks';
 			}
 			var reportEl = document.getElementById('iwt-report-source');
 			if (reportEl) {
-				reportEl.textContent = reportLines.join('\n');
+				reportEl.textContent = collected
+					.map(function (result) {
+						return '## ' + (result.label || '') + '\n' + (result.description || '') + '\n';
+					})
+					.join('\n');
 			}
 		});
 	}
@@ -190,12 +361,16 @@
 		var bar = root.querySelector('.iwt-progress__bar');
 		var track = root.querySelector('.iwt-progress__track');
 		var msg = root.querySelector('.iwt-progress__message');
+		var pct = root.querySelector('.iwt-progress__pct');
 		var value = Math.max(0, Math.min(100, parseInt(progress, 10) || 0));
 		if (bar) {
 			bar.style.width = value + '%';
 		}
 		if (track) {
 			track.setAttribute('aria-valuenow', String(value));
+		}
+		if (pct) {
+			pct.textContent = value + '%';
 		}
 		if (msg) {
 			msg.textContent = message || '';
@@ -303,7 +478,6 @@
 			if (!url) {
 				return;
 			}
-			// Report body is stored server-side (store_for_download); never POST it.
 			window.location.href = url;
 		});
 	}
@@ -334,5 +508,16 @@
 		}
 		bindCopy();
 		bindDownload();
+		bindAccordions(document);
+		bindFilters();
 	});
+
+	window.iwtCoreUi = {
+		runChecks: runChecks,
+		cardHtml: cardHtml,
+		renderGrouped: renderGrouped,
+		updateSummary: updateSummary,
+		bindAccordions: bindAccordions,
+		setProgress: setProgress
+	};
 })();

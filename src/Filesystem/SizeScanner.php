@@ -184,24 +184,38 @@ final class SizeScanner implements Job {
 	 * @return array<string,mixed>
 	 */
 	public function step( array $state, $time_budget ) {
-		$deadline    = microtime( true ) + (float) $time_budget;
-		$stack       = isset( $state['stack'] ) && is_array( $state['stack'] ) ? $state['stack'] : array();
-		$nodes       = isset( $state['nodes'] ) && is_array( $state['nodes'] ) ? $state['nodes'] : array();
-		$unread      = isset( $state['unreadable'] ) && is_array( $state['unreadable'] ) ? $state['unreadable'] : array();
-		$unread_n    = isset( $state['unreadable_count'] ) ? (int) $state['unreadable_count'] : count( $unread );
-		$total_b     = isset( $state['total_bytes'] ) ? (int) $state['total_bytes'] : 0;
-		$total_f     = isset( $state['total_files'] ) ? (int) $state['total_files'] : 0;
-		$visited     = isset( $state['visited'] ) ? (int) $state['visited'] : 0;
-		$estimated   = max( 1, isset( $state['estimated'] ) ? (int) $state['estimated'] : 1 );
-		$root        = isset( $state['root'] ) ? (string) $state['root'] : '';
-		$top_files   = isset( $state['top_files'] ) && is_array( $state['top_files'] ) ? $state['top_files'] : array();
-		$dead_files  = isset( $state['dead_files'] ) && is_array( $state['dead_files'] ) ? $state['dead_files'] : array();
-		$dead_over   = isset( $state['dead_files_overflow'] ) ? (int) $state['dead_files_overflow'] : 0;
-		$dead_obytes = isset( $state['dead_files_overflow_bytes'] ) ? (int) $state['dead_files_overflow_bytes'] : 0;
+		$deadline     = microtime( true ) + (float) $time_budget;
+		$stack        = isset( $state['stack'] ) && is_array( $state['stack'] ) ? $state['stack'] : array();
+		$nodes        = isset( $state['nodes'] ) && is_array( $state['nodes'] ) ? $state['nodes'] : array();
+		$unread       = isset( $state['unreadable'] ) && is_array( $state['unreadable'] ) ? $state['unreadable'] : array();
+		$unread_n     = isset( $state['unreadable_count'] ) ? (int) $state['unreadable_count'] : count( $unread );
+		$total_b      = isset( $state['total_bytes'] ) ? (int) $state['total_bytes'] : 0;
+		$total_f      = isset( $state['total_files'] ) ? (int) $state['total_files'] : 0;
+		$visited      = isset( $state['visited'] ) ? (int) $state['visited'] : 0;
+		$estimated    = max( 1, isset( $state['estimated'] ) ? (int) $state['estimated'] : 1 );
+		$root         = isset( $state['root'] ) ? (string) $state['root'] : '';
+		$top_files    = isset( $state['top_files'] ) && is_array( $state['top_files'] ) ? $state['top_files'] : array();
+		$dead_files   = isset( $state['dead_files'] ) && is_array( $state['dead_files'] ) ? $state['dead_files'] : array();
+		$dead_over    = isset( $state['dead_files_overflow'] ) ? (int) $state['dead_files_overflow'] : 0;
+		$dead_obytes  = isset( $state['dead_files_overflow_bytes'] ) ? (int) $state['dead_files_overflow_bytes'] : 0;
+		$max_per_step = PHP_INT_MAX;
+		if ( function_exists( 'apply_filters' ) ) {
+			/**
+			 * Cap how many stack entries one SizeScanner step may process.
+			 *
+			 * @param int $max Max entries (default unlimited).
+			 */
+			$max_per_step = (int) apply_filters( 'iworks_tools_size_scanner_max_per_step', $max_per_step );
+			if ( $max_per_step < 1 ) {
+				$max_per_step = 1;
+			}
+		}
+		$processed = 0;
 
-		while ( ! empty( $stack ) && microtime( true ) < $deadline ) {
+		while ( ! empty( $stack ) && $processed < $max_per_step && microtime( true ) < $deadline ) {
 			$path = array_pop( $stack );
 			++$visited;
+			++$processed;
 
 			if ( is_link( $path ) ) {
 				continue;

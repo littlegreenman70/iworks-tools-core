@@ -207,13 +207,17 @@ final class Registry {
 						$icon = isset( $plugin['icon'] ) ? (string) $plugin['icon'] : 'dashicons-admin-tools';
 						echo '<article class="iwt-card" role="listitem">';
 						echo '<div class="iwt-card__icon"><span class="dashicons ' . esc_attr( $icon ) . '" aria-hidden="true"></span></div>';
+						echo '<div class="iwt-card__title-row">';
 						echo '<h2 class="iwt-card__title">' . esc_html( $name ) . '</h2>';
-						echo '<p class="iwt-card__meta">' . esc_html( Strings::get( 'plugin_version', array( 'version' => $ver ) ) ) . '</p>';
+						if ( '' !== $ver ) {
+							echo '<span class="iwt-pill">' . esc_html( Strings::get( 'plugin_version', array( 'version' => $ver ) ) ) . '</span>';
+						}
+						echo '</div>';
 						if ( '' !== $desc ) {
 							echo '<p class="iwt-card__desc">' . esc_html( $desc ) . '</p>';
 						}
 						if ( '' !== $url ) {
-							echo '<p><a class="button button-primary" href="' . esc_url( $url ) . '">' . esc_html( Strings::get( 'open' ) ) . '</a></p>';
+							echo '<p class="iwt-card__action"><a class="button button-primary" href="' . esc_url( $url ) . '">' . esc_html( Strings::get( 'open' ) ) . '</a></p>';
 						}
 						echo '</article>';
 					}
